@@ -94,27 +94,30 @@ namespace Tanks
                 if (Rectangles[i].Top < 0 || Rectangles[i].Bottom > this.ClientRectangle.Height)
                     Directions[Labels[i]] = - Directions[Labels[i]];
 
-                if (Directions[Labels[i]] < 0)
-                    Directions[Labels[i]] += Math.PI * 2;
-                if (Directions[Labels[i]] > Math.PI * 2)
-                    Directions[Labels[i]] -= Math.PI * 2;
+                Directions[Labels[i]] = Directions[Labels[i]].SetFrom0To2pi();
 
                 // Проверяем коллизии с другими танками
                 for (int j = i + 1; j < Labels.Count; j++)
                     if (Rectangles[i].IntersectsWith(Rectangles[j]))
                     {
                         // Меняем направление для labels[i] и labels[j]
-                        var Vect = getPointDirection(Labels[j].Location, Labels[i].Location);
-                        Directions[Labels[i]] = Vect * 2 - Directions[Labels[i]];
-                        Directions[Labels[j]] = Vect * 2 - Directions[Labels[j]];
+                        var Vect = Math.PI / 2 + getPointDirection(Labels[j].Location, Labels[i].Location);
+                        Vect *= 2;
+                        Vect = Vect.SetFrom0To2pi();
+                        Directions[Labels[i]] = Vect - Directions[Labels[i]];
+                        Directions[Labels[j]] = Vect - Directions[Labels[j]];
                     }
 
                 // Проверяем столкновения с препядствиями
                 for (int j = Labels.Count; j < Rectangles.Count; j++)
                     if (Rectangles[i].IntersectsWith(Rectangles[j]))
                     {
-                        var Vect = getPointDirection(Point.Add(Rectangles[j].Location, new Size(Rectangles[j].Size.Width / 2, Rectangles[j].Size.Height / 2)), Labels[i].Location);
-                        Directions[Labels[i]] = Vect * 2 - Directions[Labels[i]];
+                        var RectCenter = new Point(Rectangles[j].X + Rectangles[j].Width / 2, Rectangles[j].Y + Rectangles[j].Height / 2);
+                        var TankCenter = new Point(Rectangles[i].X + Rectangles[i].Width / 2, Rectangles[i].Y + Rectangles[i].Height / 2);
+                        var Vect = Math.PI/2 + getPointDirection(RectCenter, TankCenter);
+                        Vect *= 2;
+                        Vect = Vect.SetFrom0To2pi();
+                        Directions[Labels[i]] = Vect - Directions[Labels[i]];
                     }
                 
                 if (Directions[Labels[i]] < 0)
@@ -152,7 +155,7 @@ namespace Tanks
             double dx = p2.X - p1.X;
             double dy = p2.Y - p1.Y;
 
-            return Math.Atan2(dy, dy);
+            return Math.Atan2(dy, dx);
         }
 
         private void trackBar1_ValueChanged(object sender, EventArgs e)
@@ -164,6 +167,19 @@ namespace Tanks
             }
             else
                 timer1.Stop();
+        }
+    }
+
+    public static class Extensions
+    {
+        public static double SetFrom0To2pi(this double D)
+        {
+            while (D < 0)
+                D += Math.PI * 2;
+            while (D > Math.PI * 2)
+                D -= Math.PI * 2;
+
+            return D;
         }
     }
 }
